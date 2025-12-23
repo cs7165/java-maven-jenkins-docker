@@ -53,10 +53,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Docker Image pushed successfully to DockerHub"
+            echo "✅ Docker image built and pushed successfully"
         }
         failure {
-            echo "❌ Pipeline Failed"
+            echo "❌ Pipeline failed"
         }
     }
 }
