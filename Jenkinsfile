@@ -6,10 +6,15 @@ pipeline {
         jdk 'jdk17'
     }
 
+    environment {
+        DOCKER_IMAGE = "sagarbarve/java-devops-app:1.0"
+    }
+
     stages {
+
         stage('Checkout Code') {
             steps {
-                echo 'Code already checked out from SCM'
+                echo 'Code checked out from SCM'
             }
         }
 
@@ -21,44 +26,37 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t java-devops-app:1.0 .'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Login to DockerHub') {
             steps {
-                sh '''
-                docker rm -f java-app || true
-                docker run -d --name java-app java-devops-app:1.0
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
             }
         }
 
-     stage('Push Image to DockerHub') {
-    steps {
-        echo "Pushing Docker image to DockerHub"
-
-        withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-creds',
-            usernameVariable: 'DOCKER_USER',
-            passwordVariable: 'DOCKER_PASS'
-        )]) {
-            sh '''
-                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                docker push sagarbarve/java-devops-app:1.0
-            '''
+        stage('Push Image to DockerHub') {
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
+            }
         }
-    }
-}
-
     }
 
     post {
         success {
-            echo "Deployment Successful"
+            echo "✅ Docker Image pushed successfully to DockerHub"
         }
         failure {
-            echo "Build Failed"
+            echo "❌ Pipeline Failed"
         }
     }
 }
