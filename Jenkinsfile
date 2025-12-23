@@ -34,11 +34,22 @@ pipeline {
             }
         }
 
-          stage('Push Code to DockerHub') {
-            steps {
-              echo "Pushing code to DockerHub"
-            }
+     stage('Push Image to DockerHub') {
+          steps {
+              echo "Pushing Docker image to DockerHub"
+                      withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                docker push sagarbarve/java-devops-app:1.0
+            '''
         }
+    }
+}
+
     }
 
     post {
