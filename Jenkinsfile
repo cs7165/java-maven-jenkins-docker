@@ -8,6 +8,8 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sagarbarve/java-devops-app:1.0"
+        EC2_USER = "ubuntu"
+        EC2_HOST = "<EC2_PUBLIC_IP>"
     }
 
     stages {
@@ -49,14 +51,28 @@ pipeline {
                 sh 'docker push $DOCKER_IMAGE'
             }
         }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(credentials: ['ec2-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << EOF
+                          docker pull $DOCKER_IMAGE
+                          docker rm -f java-app || true
+                          docker run -d --name java-app $DOCKER_IMAGE
+                        EOF
+                    '''
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ Docker Image pushed successfully to DockerHub"
+            echo "✅ App deployed successfully on EC2"
         }
         failure {
-            echo "❌ Pipeline Failed"
+            echo "❌ Deployment Failed"
         }
     }
 }
