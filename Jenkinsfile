@@ -33,6 +33,12 @@ pipeline {
                 '''
             }
         }
+
+          stage('Push Code to DockerHub') {
+            steps {
+              echo "Pushing code to DockerHub"
+            }
+        }
     }
 
     post {
